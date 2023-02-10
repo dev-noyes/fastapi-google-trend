@@ -6,9 +6,9 @@ tags:
   - python
 ---
 
-# FastAPI Example
+# Google Trend REST API template
 
-This example starts up a [FastAPI](https://fastapi.tiangolo.com/) server.
+Railway 의 fastapi 템플릿을 활용해서 만들었습니다. 
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/-NvLj4?referralCode=milo)
 ## ✨ Features
