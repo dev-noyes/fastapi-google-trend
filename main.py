@@ -1,14 +1,30 @@
 from fastapi import FastAPI, Query
 import requests
 import xml.etree.ElementTree as ET
+from fastapi.middleware.cors import CORSMiddleware
 
 from typing import List
 from pydantic import BaseModel
 
+
 class TrendResult(BaseModel):
     trends: List[str]
 
+
 app = FastAPI()
+
+origins = [
+    "*"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.get("/api/trends", response_model=TrendResult)
 def get_trends(region: str = Query("US", max_length=2)):

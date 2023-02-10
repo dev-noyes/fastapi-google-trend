@@ -1,29 +1,32 @@
 ---
 title: FastAPI
 description: A FastAPI server
+author: Dongjun Yang
 tags:
   - fastapi
   - python
+  - chatgpt
 ---
 
 # Google Trend REST API template
 
 Railway 의 fastapi 템플릿을 활용해서 만들었습니다. 
+ChatGPT 를 사용해서 google trends 를 나라별로 받아오는 api를 만들었습니다.
+문서를 원하시는 분은 [문서](https://fastapi-google-trend.up.railway.app/redoc) 을 입력하시면 됩니다.
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template/-NvLj4?referralCode=milo)
+## 주의사항
+
+- 현재 CORS 대응
+
+## 사용법 
+
+- 미국데이터 : https://fastapi-google-trend.up.railway.app/api/trends 
+- 한국데이터 : https://fastapi-google-trend.up.railway.app/api/trends?region=KR
+- 일본데이터 : https://fastapi-google-trend.up.railway.app/api/trends?region=JP
+
 ## ✨ Features
 
 - FastAPI
 - Python 3
+- ChatGPT
 
-## 💁‍♀️ How to use
-
-- Deploy using the button 👆
-- Clone locally and install packages with Pip using `pip install -r requirements.txt` or Poetry using `poetry install`
-- Connect to your project using `railway link`
-- Run locally using `uvicorn main:app --reload`
-
-## 📝 Notes
-
-- To learn about how to use FastAPI with most of its features, you can visit the [FastAPI Documentation](https://fastapi.tiangolo.com/tutorial/).
-- FastAPI provides automatic documentation to call and test your API directly from the browser. You can access it at `/docs` with [Swagger](https://github.com/swagger-api/swagger-ui) or at `/redoc` with [Redoc](https://github.com/Rebilly/ReDoc).
