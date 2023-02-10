@@ -6,6 +6,7 @@ tags:
   - fastapi
   - python
   - chatgpt
+  - cors
 ---
 
 # Google Trend REST API template
@@ -13,10 +14,6 @@ tags:
 Railway 의 fastapi 템플릿을 활용해서 만들었습니다. 
 ChatGPT 를 사용해서 google trends 를 나라별로 받아오는 api를 만들었습니다.
 문서를 원하시는 분은 [문서](https://fastapi-google-trend.up.railway.app/redoc) 을 입력하시면 됩니다.
-
-## 주의사항
-
-- 현재 CORS 대응
 
 ## 사용법 
 
@@ -29,4 +26,4 @@ ChatGPT 를 사용해서 google trends 를 나라별로 받아오는 api를 만�
 - FastAPI
 - Python 3
 - ChatGPT
-
+- CORS 대응
