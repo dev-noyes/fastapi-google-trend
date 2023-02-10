@@ -1,27 +1,16 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import FastAPI, Query
+import requests
+import xml.etree.ElementTree as ET
 
 app = FastAPI()
 
-class Msg(BaseModel):
-    msg: str
-
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World. Welcome to FastAPI!"}
-
-
-@app.get("/path")
-async def demo_get():
-    return {"message": "This is /path endpoint, use a post request to transform the text to uppercase"}
-
-
-@app.post("/path")
-async def demo_post(inp: Msg):
-    return {"message": inp.msg.upper()}
-
-
-@app.get("/path/{path_id}")
-async def demo_get_path_id(path_id: int):
-    return {"message": f"This is /path/{path_id} endpoint, use post request to retrieve result"}
+@app.get("/trends")
+def get_trends(region: str = Query("US", max_length=2)):
+    url = f"https://trends.google.com/trends/trendingsearches/daily/rss?geo={region}"
+    response = requests.get(url)
+    root = ET.fromstring(response.content)
+    trends = []
+    for item in root.iter("item"):
+        title = item.find("title").text
+        trends.append(title)
+    return {"trends": trends}
