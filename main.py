@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Query
 
 from fastapi.middleware.cors import CORSMiddleware
-
+from typing import List
 from pydantic import BaseModel
 
 import requests
@@ -32,7 +32,7 @@ app.add_middleware(
 
 
 class TrendResult(BaseModel):
-    trends: str
+    trends: List[str] = []
 
 
 @app.get("/api/trends", response_model=TrendResult)
@@ -49,10 +49,10 @@ def get_trends(region: str = Query("US", max_length=2)):
 
 class ReplyResult(BaseModel):
     comment: str
-    replies: list[str] = []
+    replies: List[str] = []
 
 
-@app.get("/api/youtube_comments", response_model=list[ReplyResult])
+@app.get("/api/youtube_comments", response_model=List[ReplyResult])
 async def youtube_comments(url: str = Query(..., required=True)):
     # video_id = re.search(r"v=([^&]+)", url).group(1)
     video_id = url
