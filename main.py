@@ -32,7 +32,9 @@ app.add_middleware(
 
 
 class TrendResult(BaseModel):
-    trends: list[str]
+    trends: list[str] = []
+    class Config:
+        orm_mode = True
 
 
 @app.get("/api/trends", response_model=TrendResult)
@@ -49,7 +51,7 @@ def get_trends(region: str = Query("US", max_length=2)):
 
 class ReplyResult(BaseModel):
     comment: str
-    replies: list[str] | None = None
+    replies: list[str] = []
     class Config:
         orm_mode = True
 
