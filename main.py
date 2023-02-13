@@ -85,7 +85,7 @@ class QrcodeResult(BaseModel):
 
 
 @app.get("/api/qrcode", response_model=QrcodeResult)
-async def qrcode_generator(name: str = Query(..., min_length=1, max_length=30)):
+async def qrcode_generator(name: str = Query(..., min_length=1, max_length=30, required=True)):
     qr = qrcode.QRCode(
         version=1,
         box_size=10,
