@@ -117,7 +117,14 @@ async def generate_color_combination(n: int = 5):
     return {"result": color_combination}
 
 
-@app.get("/api/youtube_popular")
+class PopularResult(BaseModel):
+    link: str
+    title: str
+    description: str | None = None
+    nation: str
+
+
+@app.get("/api/youtube_popular", response_model=list[PopularResult])
 async def get_popular_videos(nation: str = "US"):
     api_key = GCP_YT_APIKEY
     response = requests.get("https://www.googleapis.com/youtube/v3/videos",
