@@ -56,3 +56,22 @@ pillow 라이브러리도 함께 설치를 해줘야 qrcode 라이브러리가 �
 
 - 사용하기 : https://fastapi-google-trend.up.railway.app/api/qrcode?name=1
 
+## Color combination generator api
+
+기본 5개의 Color 를 주는 rest api.
+hex 값으로 데이터를 array 형식으로 뿌려줌.
+
+### 사용법 
+
+- 사용하기 : https://fastapi-google-trend.up.railway.app/api/color
+- 사용하기 : https://fastapi-google-trend.up.railway.app/api/color?n=5
+
+## Youtube Hot video api
+
+각 나라에 유명한 유투브 링크 제목 설명을 알려주는 API.
+query param 으로 각 나라별로 유명한 유투브들을 알려준다.
+
+### 사용법 
+
+- 사용하기 : https://fastapi-google-trend.up.railway.app/api/youtube_popular
+- 사용하기 : https://fastapi-google-trend.up.railway.app/api/youtube_popular?region=KR

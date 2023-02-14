@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Query
 
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 import requests
 import xml.etree.ElementTree as ET
@@ -18,7 +18,14 @@ from random import choice
 load_dotenv()
 GCP_YT_APIKEY = os.environ.get('GCP_YT_APIKEY')
 
-app = FastAPI()
+app = FastAPI(
+    docs_url="/docs",
+    redoc_url="/redoc",
+    title="Noyes's REST API",
+    description="This api is written by yangdongjun and it is open-sourced. The making films are on youtube.",
+    version="0.2.0",
+    openapi_url="/openapi.json",
+)
 
 origins = [
     "*"
@@ -38,7 +45,14 @@ class TrendResult(BaseModel):
 
 
 @app.get("/api/trends", response_model=TrendResult)
-async def get_trends(region: str = Query("US", max_length=2)):
+async def google_trends(region: str = Query("US", max_length=2)):
+    """
+    Get the latest google trend every country with query param `region`.
+
+    - `region`: An optional query parameter to search for specific region trend. default : US
+
+    Returns the retrieved item.
+    """
     url = f"https://trends.google.com/trends/trendingsearches/daily/rss?geo={region}"
     response = requests.get(url)
     root = ET.fromstring(response.content)
@@ -56,6 +70,13 @@ class ReplyResult(BaseModel):
 
 @app.get("/api/youtube_comments", response_model=list[ReplyResult])
 async def youtube_comments(url: str = Query(..., required=True)):
+    """
+    Get the comment and replies of youtube video with query param `url`.
+
+    - `url`: An required query parameter to specific videio id of youtube.
+
+    Returns the retrieved item.
+    """
     # video_id = re.search(r"v=([^&]+)", url).group(1)
     video_id = url
 
@@ -89,6 +110,13 @@ class QrcodeResult(BaseModel):
 
 @app.get("/api/qrcode", response_model=QrcodeResult)
 async def qrcode_generator(name: str = Query(..., min_length=1, max_length=30, required=True)):
+    """
+    Get the base64 result with query param `name`.
+
+    - `name`: An required query parameter to get the result of base64 qrcode.
+
+    Returns the retrieved item.
+    """
     qr = qrcode.QRCode(
         version=1,
         box_size=10,
@@ -110,7 +138,14 @@ class ColorResult(BaseModel):
 
 
 @app.get("/api/color", response_model=ColorResult)
-async def generate_color_combination(n: int = 5):
+async def color_combination(n: int = 5):
+    """
+    Define a list of all possible HEX color codes with query param `n`.
+
+    - `n`: Number of color combination. If n is 5, the api should give 5 results.
+
+    Returns the retrieved item.
+    """
     # Define a list of all possible HEX color codes
     colors = [f"#{format(i, '06x')}" for i in range(16777216)]
     color_combination = [choice(colors) for i in range(n)]
@@ -125,14 +160,21 @@ class PopularResult(BaseModel):
 
 
 @app.get("/api/youtube_popular", response_model=list[PopularResult])
-async def get_popular_videos(nation: str = "US"):
+async def youtube_popular_videos(region: str = Query("US", max_length=2)):
+    """
+    Get the popular youtube video info with query param `region`.
+
+    - `region`: An optional query parameter to search for specific nation youtube. default : US
+
+    Returns the retrieved item.
+    """
     api_key = GCP_YT_APIKEY
     response = requests.get("https://www.googleapis.com/youtube/v3/videos",
-                            params={"part": "snippet", "chart": "mostPopular", "regionCode": nation,
+                            params={"part": "snippet", "chart": "mostPopular", "regionCode": region,
                                     "key": api_key})
     items = response.json()["items"]
     videos = [{"link": f"https://www.youtube.com/watch?v={item['id']}",
                "title": item["snippet"]["title"],
                "description": item["snippet"]["description"],
-               "nation": nation} for item in items]
+               "region": region} for item in items]
     return videos
