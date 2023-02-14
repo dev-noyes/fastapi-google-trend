@@ -6,11 +6,14 @@ from pydantic import BaseModel
 import requests
 import xml.etree.ElementTree as ET
 # import re
+from dotenv import load_dotenv
+
 import qrcode
 import base64
 from io import BytesIO
-from dotenv import load_dotenv
 import os
+from random import choice
+
 
 load_dotenv()
 GCP_YT_APIKEY = os.environ.get('GCP_YT_APIKEY')
@@ -35,7 +38,7 @@ class TrendResult(BaseModel):
 
 
 @app.get("/api/trends", response_model=TrendResult)
-def get_trends(region: str = Query("US", max_length=2)):
+async def get_trends(region: str = Query("US", max_length=2)):
     url = f"https://trends.google.com/trends/trendingsearches/daily/rss?geo={region}"
     response = requests.get(url)
     root = ET.fromstring(response.content)
@@ -58,7 +61,7 @@ async def youtube_comments(url: str = Query(..., required=True)):
 
     # Get the comments from the YouTube API
     api_key = GCP_YT_APIKEY
-    api_url = f"https://www.googleapis.com/youtube/v3/commentThreads?part=snippet,replies&videoId={video_id}&textFormat=plainText&&maxResults=100&order=time&key={api_key}"
+    api_url = f"https://www.googleapis.com/youtube/v3/commentThreads?part=snippet,replies&videoId={video_id}&textFormat=plainText&maxResults=100&order=time&key={api_key}"
     response = requests.get(api_url)
     comments = response.json()
 
@@ -100,3 +103,29 @@ async def qrcode_generator(name: str = Query(..., min_length=1, max_length=30, r
     buffer.seek(0)
 
     return {"result": base64.b64encode(buffer.getvalue()).decode("utf-8")}
+
+
+class ColorResult(BaseModel):
+    result: list[str] = []
+
+
+@app.get("/api/color", response_model=ColorResult)
+async def generate_color_combination(n: int = 5):
+    # Define a list of all possible HEX color codes
+    colors = [f"#{format(i, '06x')}" for i in range(16777216)]
+    color_combination = [choice(colors) for i in range(n)]
+    return {"result": color_combination}
+
+
+@app.get("/api/youtube_popular")
+async def get_popular_videos(nation: str = "US"):
+    api_key = GCP_YT_APIKEY
+    response = requests.get("https://www.googleapis.com/youtube/v3/videos",
+                            params={"part": "snippet", "chart": "mostPopular", "regionCode": nation,
+                                    "key": api_key})
+    items = response.json()["items"]
+    videos = [{"link": f"https://www.youtube.com/watch?v={item['id']}",
+               "title": item["snippet"]["title"],
+               "description": item["snippet"]["description"],
+               "nation": nation} for item in items]
+    return videos
