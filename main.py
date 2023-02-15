@@ -156,7 +156,7 @@ class PopularResult(BaseModel):
     link: str
     title: str
     description: str | None = None
-    nation: str
+    region: str
 
 
 @app.get("/api/youtube_popular", response_model=list[PopularResult])
@@ -164,7 +164,7 @@ async def youtube_popular_videos(region: str = Query("US", max_length=2)):
     """
     Get the popular youtube video info with query param `region`.
 
-    - `region`: An optional query parameter to search for specific nation youtube. default : US
+    - `region`: An optional query parameter to search for specific region youtube. default : US
 
     Returns the retrieved item.
     """
