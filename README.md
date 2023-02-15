@@ -1,12 +1,13 @@
 ---
 title: SideProject REST API
-description: sample rest api
+description: youtube rest api
 author: Dongjun Yang
 tags:
   - fastapi
   - python
   - chatgpt
   - cors
+  - rest api
 ---
 
 # 여러 REST API 를 배포해보았습니다.
