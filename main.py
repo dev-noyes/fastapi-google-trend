@@ -2,6 +2,7 @@ from fastapi import FastAPI, Query
 
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from typing import Optional
 
 import requests
 import xml.etree.ElementTree as ET
@@ -193,3 +194,103 @@ async def youtube_popular_videos(region: str = Query("US", max_length=2)):
                "description": item["snippet"]["description"],
                "region": region} for item in items]
     return videos
+
+# Define a Pydantic model for the YouTube video data
+
+
+class VideoData(BaseModel):
+    title: str
+    view_count: int
+    subscribers: int
+    channel_title: str
+    link: str
+
+# Define a function to retrieve the YouTube video data
+
+
+def get_video_data(topic: str, region: str) -> Optional[VideoData]:
+    # Construct the URL for the video search endpoint
+    search_url = 'https://www.googleapis.com/youtube/v3/search'
+    search_params = {
+        'q': topic,
+        'type': 'video',
+        'regionCode': region,
+        'part': 'id',
+        'maxResults': 50,
+        'key': GCP_YT_APIKEY
+    }
+
+    videos = []
+
+    # Call the video search endpoint to get the next page of results
+    search_response = requests.get(search_url, params=search_params)
+    search_response.raise_for_status()
+    search_data = search_response.json()
+
+    # Extract the video IDs from the search results
+    video_ids = [item['id']['videoId'] for item in search_data['items']]
+
+    # Construct the URL for the video details endpoint
+    details_url = 'https://www.googleapis.com/youtube/v3/videos'
+    details_params = {
+        'id': ','.join(video_ids),
+        'part': 'snippet,statistics',
+        'key': GCP_YT_APIKEY
+    }
+
+    # Call the video details endpoint to get the video data
+    details_response = requests.get(details_url, params=details_params)
+    details_response.raise_for_status()
+    details_data = details_response.json()
+
+    # Extract the relevant data from the video details response
+    for item in details_data['items']:
+        snippet = item['snippet']
+        statistics = item['statistics']
+        title = snippet['title']
+        view_count = int(statistics['viewCount'])
+        channel_title = snippet['channelTitle']
+        link = f"https://www.youtube.com/watch?v={item['id']}"
+
+        # Get the channel ID for this video
+        channel_id = snippet['channelId']
+
+        # Construct the URL for the channel details endpoint
+        channels_url = 'https://www.googleapis.com/youtube/v3/channels'
+        channels_params = {
+            'id': channel_id,
+            'part': 'statistics',
+            'key': GCP_YT_APIKEY
+        }
+
+        # Call the channel details endpoint to get the subscriber count
+        channels_response = requests.get(
+            channels_url, params=channels_params)
+        channels_response.raise_for_status()
+        channels_data = channels_response.json()
+
+        # Extract the subscriber count from the channel details response
+        subscribers = int(
+            channels_data['items'][0]['statistics'].get('subscriberCount', 0))
+
+        videos.append(VideoData(
+            title=title,
+            link=link,
+            view_count=view_count,
+            channel_title=channel_title,
+            subscribers=subscribers
+        ))
+
+    return videos
+
+# Define the API endpoint
+
+
+@app.get('/api/youtube_analysis')
+async def youtube_data(
+    topic: str = Query(..., description='The topic to search for'),
+    region: str = Query(...,
+                        description='The region to search in (ISO 3166-1 alpha-2 code)')
+) -> Optional[VideoData]:
+    # Call the get_video_data function and return the result
+    return get_video_data(topic, region)
