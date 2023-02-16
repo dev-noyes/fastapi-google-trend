@@ -147,7 +147,22 @@ async def color_combination(n: int = 5):
     Returns the retrieved item.
     """
     # Define a list of all possible HEX color codes
-    colors = [f"#{format(i, '06x')}" for i in range(16777216)]
+    # 16777216 is too slow
+    # colors = [f"#{format(i, '06x')}" for i in range(16777216)]
+    colors = ["#000000", "#000080", "#0000ff", "#008000", "#008080", "#00ff00", "#00ffff", "#800000",
+              "#800080", "#808000", "#808080", "#c0c0c0", "#ff0000", "#ff00ff", "#ffff00", "#ffffff",
+              "#7f0000", "#7f007f", "#7f00ff", "#007f00", "#007f7f", "#00ff7f", "#00ff7f", "#7f3f00",
+              "#7f007f", "#7f7f00", "#7f7f7f", "#ff7f7f", "#ff7fff", "#ffff7f", "#4d4d4d", "#0000c6",
+              "#0000ff", "#00c600", "#00c6c6", "#00ff00", "#00ffff", "#c60000", "#c600c6", "#c6c600",
+              "#c6c6c6", "#ff0000", "#ff00ff", "#ffff00", "#ffffff", "#c10000", "#c100c1", "#c1c100",
+              "#c1c1c1", "#ff7f7f", "#ff7fff", "#ffff7f", "#7f7f7f", "#1e1e1e", "#1e1e9c", "#1e9c1e",
+              "#1e9c9c", "#9c1e1e", "#9c1e9c", "#9c9c1e", "#9c9c9c", "#4c4c4c", "#4c4cff", "#4cff4c",
+              "#4cff4c", "#4cffcf", "#4cffff", "#ff4c4c", "#ff4cff", "#ffff4c", "#ffff4c", "#ff4ccf",
+              "#ff4fff", "#ff7f00", "#ff7fff", "#ffaa00", "#ffffaa", "#cf9f9f", "#e6e6e6", "#b5b5b5",
+              "#939393", "#4c4cff", "#4cff4c", "#4cffff", "#4c4c4c", "#ff4c4c", "#ff4cff", "#ffff4c",
+              "#ffff4c", "#ff4ccf", "#ff4fff", "#ff7f00", "#ff7fff", "#ffaa00", "#ffffaa", "#cf9f9f",
+              "#e6e6e6", "#b5b5b5", "#939393", "#7f7f00", "#7f7f7f", "#7f7fff", "#7fff00", "#7fff7f"
+              ]
     color_combination = [choice(colors) for i in range(n)]
     return {"result": color_combination}
 
