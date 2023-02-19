@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, File, UploadFile
 
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -15,6 +15,11 @@ from io import BytesIO
 import os
 from random import choice
 
+from PIL import Image
+import numpy as np
+import colorgram
+import io
+
 
 load_dotenv()
 GCP_YT_APIKEY = os.environ.get('GCP_YT_APIKEY')
@@ -24,7 +29,7 @@ app = FastAPI(
     redoc_url="/redoc",
     title="Noyes's REST API",
     description="This api is written by yangdongjun and it is open-sourced. The making films are on youtube.",
-    version="0.2.0",
+    version="0.3.0",
     openapi_url="/openapi.json",
 )
 
@@ -294,3 +299,19 @@ async def youtube_data(
 ) -> Optional[VideoData]:
     # Call the get_video_data function and return the result
     return get_video_data(topic, region)
+
+
+@app.post("/api/color_palette")
+async def color_palette(n: int = 10, file: UploadFile = File(...)):
+    # Convert the file to a NumPy array
+    contents = await file.read()
+    img = Image.open(io.BytesIO(contents))
+
+    # Extract colors using colorgram library
+    colors = colorgram.extract(img, n)
+
+    # Get hex values of the colors
+    color_palette = [
+        f"#{c.rgb.r:02x}{c.rgb.g:02x}{c.rgb.b:02x}" for c in colors]
+
+    return {"color_palette": color_palette, "num_colors":n}
