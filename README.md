@@ -87,6 +87,8 @@ topic에 관련된 유투브 정보들을 조회순으로 알려준다.
 ## Color Extracter
 
 이미지를 업로드하면 이미지에 들어있는 메인 색깔들을 알려준다.
+multipart 로 이미지를 업로드해야한다. 
+색깔의 개수는 query param 으로 정한다.
 
 - 사용하기 : https://fastapi-google-trend.up.railway.app/api/color_palette
 - 사용하기 : https://fastapi-google-trend.up.railway.app/api/color_palette?n=10
