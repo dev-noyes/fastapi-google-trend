@@ -83,3 +83,10 @@ topic에 관련된 유투브 정보들을 조회순으로 알려준다.
 구독자 수, 조회 수 대로 좋아진다.
 
 - 사용하기 : https://fastapi-google-trend.up.railway.app/api/youtube_analysis?region=US&topic=USA
+
+## Color Extracter
+
+이미지를 업로드하면 이미지에 들어있는 메인 색깔들을 알려준다.
+
+- 사용하기 : https://fastapi-google-trend.up.railway.app/api/color_palette
+- 사용하기 : https://fastapi-google-trend.up.railway.app/api/color_palette?n=10

@@ -301,6 +301,10 @@ async def youtube_data(
     return get_video_data(topic, region)
 
 
+class ExtractData(BaseModel):
+    color_palette: list[str] = []
+    num_colors: int
+
 @app.post("/api/color_palette")
 async def color_palette(n: int = 10, file: UploadFile = File(...)):
     # Convert the file to a NumPy array
