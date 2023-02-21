@@ -92,3 +92,4 @@ multipart 로 이미지를 업로드해야한다.
 
 - 사용하기 : https://fastapi-google-trend.up.railway.app/api/color_palette
 - 사용하기 : https://fastapi-google-trend.up.railway.app/api/color_palette?n=5
+- 사용하기 : https://fastapi-google-trend.up.railway.app/api/color_palette?n=10
