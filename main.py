@@ -306,7 +306,7 @@ class ExtractData(BaseModel):
     color_palette: list[str] = []
     num_colors: int
 
-@app.post("/api/color_palette", response_model=list[ExtractData])
+@app.post("/api/color_palette", response_model=ExtractData)
 async def color_palette(n: int = 10, file: UploadFile = File(...)):
     # Convert the file to a NumPy array
     contents = await file.read()
