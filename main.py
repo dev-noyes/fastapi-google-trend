@@ -221,7 +221,8 @@ def get_video_data(topic: str, region: str) -> Optional[VideoData]:
         'type': 'video',
         'regionCode': region,
         'part': 'id',
-        'maxResults': 50,
+        'maxResults': 10,
+        'order':"viewCount",
         'key': GCP_YT_APIKEY
     }
 
@@ -291,7 +292,7 @@ def get_video_data(topic: str, region: str) -> Optional[VideoData]:
 # Define the API endpoint
 
 
-@app.get('/api/youtube_analysis')
+@app.get('/api/youtube_analysis', response_model=list[VideoData])
 async def youtube_data(
     topic: str = Query(..., description='The topic to search for'),
     region: str = Query(...,
