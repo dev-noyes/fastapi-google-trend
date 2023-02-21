@@ -80,7 +80,7 @@ query param 으로 각 나라별로 유명한 유투브들을 알려준다.
 ## Youtube info api
 
 topic에 관련된 유투브 정보들을 조회순으로 알려준다.
-구독자 수, 조회 수 대로 좋아진다.
+구독자 수, 조회 수 대로 좋아진다. 최대 10개 보낸다.
 
 - 사용하기 : https://fastapi-google-trend.up.railway.app/api/youtube_analysis?region=US&topic=USA
 
