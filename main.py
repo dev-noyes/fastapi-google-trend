@@ -27,8 +27,8 @@ from datetime import date
 
 load_dotenv()
 GCP_YT_APIKEY = os.environ.get('GCP_YT_APIKEY')
-NAVER_API_ID = os.environ.get('GCP_YT_APIKEY')
-NAVER_API_PW = os.environ.get('GCP_YT_APIKEY')
+NAVER_API_ID = os.environ.get('NAVER_API_ID')
+NAVER_API_PW = os.environ.get('NAVER_API_PW')
 
 app = FastAPI(
     docs_url="/docs",
