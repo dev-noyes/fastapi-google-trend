@@ -20,9 +20,15 @@ import numpy as np
 import colorgram
 import io
 
+import urllib.request
+import json
+from random import randint
+from datetime import date
 
 load_dotenv()
 GCP_YT_APIKEY = os.environ.get('GCP_YT_APIKEY')
+NAVER_API_ID = os.environ.get('GCP_YT_APIKEY')
+NAVER_API_PW = os.environ.get('GCP_YT_APIKEY')
 
 app = FastAPI(
     docs_url="/docs",
@@ -222,7 +228,7 @@ def get_video_data(topic: str, region: str) -> Optional[VideoData]:
         'regionCode': region,
         'part': 'id',
         'maxResults': 10,
-        'order':"viewCount",
+        'order': "viewCount",
         'key': GCP_YT_APIKEY
     }
 
@@ -306,6 +312,7 @@ class ExtractData(BaseModel):
     color_palette: list[str] = []
     num_colors: int
 
+
 @app.post("/api/color_palette", response_model=ExtractData)
 async def color_palette(n: int = 10, file: UploadFile = File(...)):
     # Convert the file to a NumPy array
@@ -319,4 +326,36 @@ async def color_palette(n: int = 10, file: UploadFile = File(...)):
     color_palette = [
         f"#{c.rgb.r:02x}{c.rgb.g:02x}{c.rgb.b:02x}" for c in colors]
 
-    return {"color_palette": color_palette, "num_colors":n}
+    return {"color_palette": color_palette, "num_colors": n}
+
+
+def get_search(query, start):
+    list_ids = []
+    query = urllib.parse.quote(query)
+    url = f"https://openapi.naver.com/v1/search/blog?query={query}&sort=date&display=100&start={start}"
+    request = urllib.request.Request(url)
+    request.add_header("X-Naver-Client-Id", NAVER_API_ID)
+    request.add_header("X-Naver-Client-Secret", NAVER_API_PW)
+    response = urllib.request.urlopen(request)
+    rescode = response.getcode()
+    if (rescode == 200):
+        response_body = response.read()
+        body = response_body.decode('utf-8')
+        data = json.loads(body)
+        for item in data["items"]:
+            id = item["bloggerlink"].split("blog.naver.com/")
+            if (len(id) > 1):
+                list_ids.append(id[1])
+    else:
+        print("Error Code:" + rescode)
+
+    return f"https://m.blog.naver.com/PostList.nhn?blogId={list_ids}"
+
+
+@app.get("/api/blogs", response_model=list[str])
+async def blog_data(query: str = Query(..., required=True)):
+    data1 = get_search(query, 1)
+    data2 = get_search(query, 101)
+    data1.extend(data2)
+    blogs = list(dict.fromkeys(data1))
+    return blogs
