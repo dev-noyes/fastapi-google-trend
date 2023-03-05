@@ -345,11 +345,11 @@ def get_search(query, start):
         for item in data["items"]:
             id = item["bloggerlink"].split("blog.naver.com/")
             if (len(id) > 1):
-                list_ids.append(id[1])
+                list_ids.append(f"https://m.blog.naver.com/PostList.nhn?blogId={id[1]}")
     else:
         print("Error Code:" + rescode)
 
-    return f"https://m.blog.naver.com/PostList.nhn?blogId={list_ids}"
+    return list_ids
 
 
 @app.get("/api/blogs", response_model=list[str])
