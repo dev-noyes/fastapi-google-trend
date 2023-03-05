@@ -93,3 +93,11 @@ multipart 로 이미지를 업로드해야한다.
 - 사용하기 : https://fastapi-google-trend.up.railway.app/api/color_palette
 - 사용하기 : https://fastapi-google-trend.up.railway.app/api/color_palette?n=5
 - 사용하기 : https://fastapi-google-trend.up.railway.app/api/color_palette?n=10
+
+
+## Naver Blog Extracter
+
+검색하고 싶은 검색어의 최신 약 200개의 네이버 블로그 아이디를 뽑아준다.
+아이디는 서이추하기 편하게 블로그 주소로 출력된다.
+
+- 사용하기 : https://fastapi-google-trend.up.railway.app/api/blogs?query=python
