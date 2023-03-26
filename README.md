@@ -107,3 +107,7 @@ multipart 로 이미지를 업로드해야한다.
 실시간 유튜브 구독자 확인 - 채널 id 무조건 입력해야한다.
 
 - 사용하기 : https://fastapi-google-trend.up.railway.app/api/channel/{id}
+
+## add proxy server
+
+- 사용하기 : https://fastapi-google-trend.up.railway.app/api/proxy/{url}
