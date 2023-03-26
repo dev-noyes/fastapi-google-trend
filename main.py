@@ -359,3 +359,20 @@ async def blog_data(query: str = Query(..., required=True)):
     data1.extend(data2)
     blogs = list(dict.fromkeys(data1))
     return blogs
+
+class SubscriberData(BaseModel):
+    subscriber_count: int
+
+@app.get("/channel/{channel_id}",response_model=SubscriberData)
+async def subscribers(channel_id: str):
+    url = f"https://www.googleapis.com/youtube/v3/channels?part=statistics&id={channel_id}&key={GCP_YT_APIKEY}"
+    
+    response = requests.get(url)
+    data = response.json()
+    
+    if "items" in data:
+        subscriber_count = data["items"][0]["statistics"]["subscriberCount"]
+    else:
+        subscriber_count = 0
+    
+    return {"subscriber_count": subscriber_count}
