@@ -363,7 +363,7 @@ async def blog_data(query: str = Query(..., required=True)):
 class SubscriberData(BaseModel):
     subscriber_count: int
 
-@app.get("/channel/{channel_id}",response_model=SubscriberData)
+@app.get("/api/channel/{channel_id}",response_model=SubscriberData)
 async def subscribers(channel_id: str):
     url = f"https://www.googleapis.com/youtube/v3/channels?part=statistics&id={channel_id}&key={GCP_YT_APIKEY}"
     
