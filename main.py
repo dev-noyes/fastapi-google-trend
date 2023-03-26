@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query, File, UploadFile
+from fastapi import FastAPI, Query, File, UploadFile, Request
 
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -24,6 +24,9 @@ import urllib.request
 import json
 from random import randint
 from datetime import date
+
+import httpx
+
 
 load_dotenv()
 GCP_YT_APIKEY = os.environ.get('GCP_YT_APIKEY')
@@ -51,6 +54,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
 
 class TrendResult(BaseModel):
     trends: list[str] = []
@@ -376,3 +382,22 @@ async def subscribers(channel_id: str):
         subscriber_count = 0
     
     return {"subscriber_count": subscriber_count}
+
+@app.route("/api/proxy/{url:path}", methods=["GET", "POST"])
+async def reverse_proxy(url: str, request: Request):
+    if request.method == "GET":
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url)
+            headers = response.headers
+            content = response.content
+            status_code = response.status_code
+        return content, headers, status_code
+    elif request.method == "POST":
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, data=await request.body())
+            headers = response.headers
+            content = response.content
+            status_code = response.status_code
+        return content, headers, status_code
+    else:
+        return {"error": "Unsupported method"}
