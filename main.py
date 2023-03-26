@@ -383,21 +383,22 @@ async def subscribers(channel_id: str):
     
     return {"subscriber_count": subscriber_count}
 
-@app.route("/api/proxy/{url:path}", methods=["GET", "POST"])
-async def reverse_proxy(url: str, request: Request):
-    if request.method == "GET":
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url)
-            headers = response.headers
-            content = response.content
-            status_code = response.status_code
-        return content, headers, status_code
-    elif request.method == "POST":
-        async with httpx.AsyncClient() as client:
-            response = await client.post(url, data=await request.body())
-            headers = response.headers
-            content = response.content
-            status_code = response.status_code
-        return content, headers, status_code
-    else:
-        return {"error": "Unsupported method"}
+
+
+@app.get("/api/proxy/{url:path}")
+async def reverse_proxy_get(url: str):
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        headers = response.headers
+        content = response.content
+        status_code = response.status_code
+    return content, headers, status_code
+
+@app.post("/api/proxy/{url:path}")
+async def reverse_proxy_post(url: str, request: Request):
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, data=await request.body())
+        headers = response.headers
+        content = response.content
+        status_code = response.status_code
+    return content, headers, status_code
