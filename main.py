@@ -1,12 +1,12 @@
 from fastapi import FastAPI, Query, File, UploadFile, Request
-
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional
 
 import requests
 import xml.etree.ElementTree as ET
-# import re
+import cv2
+from cv2 import dnn_superres
 from dotenv import load_dotenv
 
 import qrcode
@@ -54,9 +54,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
 
 class TrendResult(BaseModel):
     trends: list[str] = []
@@ -71,14 +73,17 @@ async def google_trends(region: str = Query("US", max_length=2)):
 
     Returns the retrieved item.
     """
-    url = f"https://trends.google.com/trends/trendingsearches/daily/rss?geo={region}"
-    response = requests.get(url)
-    root = ET.fromstring(response.content)
-    trends = []
-    for item in root.iter("item"):
-        title = item.find("title").text
-        trends.append(title)
-    return {"trends": trends}
+    try:
+        url = f"https://trends.google.com/trends/trendingsearches/daily/rss?geo={region}"
+        response = requests.get(url)
+        root = ET.fromstring(response.content)
+        trends = []
+        for item in root.iter("item"):
+            title = item.find("title").text
+            trends.append(title)
+        return {"trends": trends}
+    except Exception as e:
+        return {"result": "Error@Failed to process."}
 
 
 class ReplyResult(BaseModel):
@@ -95,31 +100,34 @@ async def youtube_comments(url: str = Query(..., required=True)):
 
     Returns the retrieved item.
     """
-    # video_id = re.search(r"v=([^&]+)", url).group(1)
-    video_id = url
+    try:
+        # video_id = re.search(r"v=([^&]+)", url).group(1)
+        video_id = url
 
-    # Get the comments from the YouTube API
-    api_key = GCP_YT_APIKEY
-    api_url = f"https://www.googleapis.com/youtube/v3/commentThreads?part=snippet,replies&videoId={video_id}&textFormat=plainText&maxResults=100&order=time&key={api_key}"
-    response = requests.get(api_url)
-    comments = response.json()
+        # Get the comments from the YouTube API
+        api_key = GCP_YT_APIKEY
+        api_url = f"https://www.googleapis.com/youtube/v3/commentThreads?part=snippet,replies&videoId={video_id}&textFormat=plainText&maxResults=100&order=time&key={api_key}"
+        response = requests.get(api_url)
+        comments = response.json()
 
-    # Extract the comments and replies from the API response
-    results = []
-    for comment in comments["items"]:
-        comment_text = {}
-        reply_text = []
-        # check json key value
-        if "snippet" in comment:
-            comment_text = comment["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
-        # check json key value
-        if "replies" in comment:
-            replies = [reply["snippet"]["textDisplay"]
-                       for reply in comment["replies"]["comments"]]
-            reply_text = replies
-        results += [{"comment": comment_text, "replies": reply_text}]
+        # Extract the comments and replies from the API response
+        results = []
+        for comment in comments["items"]:
+            comment_text = {}
+            reply_text = []
+            # check json key value
+            if "snippet" in comment:
+                comment_text = comment["snippet"]["topLevelComment"]["snippet"]["textDisplay"]
+            # check json key value
+            if "replies" in comment:
+                replies = [reply["snippet"]["textDisplay"]
+                           for reply in comment["replies"]["comments"]]
+                reply_text = replies
+            results += [{"comment": comment_text, "replies": reply_text}]
 
-    return results
+        return results
+    except Exception as e:
+        return {"result": "Error@Failed to process."}
 
 
 class QrcodeResult(BaseModel):
@@ -135,20 +143,23 @@ async def qrcode_generator(name: str = Query(..., min_length=1, max_length=30, r
 
     Returns the retrieved item.
     """
-    qr = qrcode.QRCode(
-        version=1,
-        box_size=10,
-        border=4
-    )
-    qr.add_data(name)
-    qr.make(fit=True)
+    try:
+        qr = qrcode.QRCode(
+            version=1,
+            box_size=10,
+            border=4
+        )
+        qr.add_data(name)
+        qr.make(fit=True)
 
-    img = qr.make_image(fill_color="black", back_color="white")
-    buffer = BytesIO()
-    img.save(buffer, format="PNG")
-    buffer.seek(0)
+        img = qr.make_image(fill_color="black", back_color="white")
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        buffer.seek(0)
 
-    return {"result": base64.b64encode(buffer.getvalue()).decode("utf-8")}
+        return {"result": base64.b64encode(buffer.getvalue()).decode("utf-8")}
+    except Exception as e:
+        return {"result": "Error@Failed to process."}
 
 
 class ColorResult(BaseModel):
@@ -164,25 +175,28 @@ async def color_combination(n: int = 5):
 
     Returns the retrieved item.
     """
-    # Define a list of all possible HEX color codes
-    # 16777216 is too slow
-    # colors = [f"#{format(i, '06x')}" for i in range(16777216)]
-    colors = ["#000000", "#000080", "#0000ff", "#008000", "#008080", "#00ff00", "#00ffff", "#800000",
-              "#800080", "#808000", "#808080", "#c0c0c0", "#ff0000", "#ff00ff", "#ffff00", "#ffffff",
-              "#7f0000", "#7f007f", "#7f00ff", "#007f00", "#007f7f", "#00ff7f", "#00ff7f", "#7f3f00",
-              "#7f007f", "#7f7f00", "#7f7f7f", "#ff7f7f", "#ff7fff", "#ffff7f", "#4d4d4d", "#0000c6",
-              "#0000ff", "#00c600", "#00c6c6", "#00ff00", "#00ffff", "#c60000", "#c600c6", "#c6c600",
-              "#c6c6c6", "#ff0000", "#ff00ff", "#ffff00", "#ffffff", "#c10000", "#c100c1", "#c1c100",
-              "#c1c1c1", "#ff7f7f", "#ff7fff", "#ffff7f", "#7f7f7f", "#1e1e1e", "#1e1e9c", "#1e9c1e",
-              "#1e9c9c", "#9c1e1e", "#9c1e9c", "#9c9c1e", "#9c9c9c", "#4c4c4c", "#4c4cff", "#4cff4c",
-              "#4cff4c", "#4cffcf", "#4cffff", "#ff4c4c", "#ff4cff", "#ffff4c", "#ffff4c", "#ff4ccf",
-              "#ff4fff", "#ff7f00", "#ff7fff", "#ffaa00", "#ffffaa", "#cf9f9f", "#e6e6e6", "#b5b5b5",
-              "#939393", "#4c4cff", "#4cff4c", "#4cffff", "#4c4c4c", "#ff4c4c", "#ff4cff", "#ffff4c",
-              "#ffff4c", "#ff4ccf", "#ff4fff", "#ff7f00", "#ff7fff", "#ffaa00", "#ffffaa", "#cf9f9f",
-              "#e6e6e6", "#b5b5b5", "#939393", "#7f7f00", "#7f7f7f", "#7f7fff", "#7fff00", "#7fff7f"
-              ]
-    color_combination = [choice(colors) for i in range(n)]
-    return {"result": color_combination}
+    try:
+        # Define a list of all possible HEX color codes
+        # 16777216 is too slow
+        # colors = [f"#{format(i, '06x')}" for i in range(16777216)]
+        colors = ["#000000", "#000080", "#0000ff", "#008000", "#008080", "#00ff00", "#00ffff", "#800000",
+                  "#800080", "#808000", "#808080", "#c0c0c0", "#ff0000", "#ff00ff", "#ffff00", "#ffffff",
+                  "#7f0000", "#7f007f", "#7f00ff", "#007f00", "#007f7f", "#00ff7f", "#00ff7f", "#7f3f00",
+                  "#7f007f", "#7f7f00", "#7f7f7f", "#ff7f7f", "#ff7fff", "#ffff7f", "#4d4d4d", "#0000c6",
+                  "#0000ff", "#00c600", "#00c6c6", "#00ff00", "#00ffff", "#c60000", "#c600c6", "#c6c600",
+                  "#c6c6c6", "#ff0000", "#ff00ff", "#ffff00", "#ffffff", "#c10000", "#c100c1", "#c1c100",
+                  "#c1c1c1", "#ff7f7f", "#ff7fff", "#ffff7f", "#7f7f7f", "#1e1e1e", "#1e1e9c", "#1e9c1e",
+                  "#1e9c9c", "#9c1e1e", "#9c1e9c", "#9c9c1e", "#9c9c9c", "#4c4c4c", "#4c4cff", "#4cff4c",
+                  "#4cff4c", "#4cffcf", "#4cffff", "#ff4c4c", "#ff4cff", "#ffff4c", "#ffff4c", "#ff4ccf",
+                  "#ff4fff", "#ff7f00", "#ff7fff", "#ffaa00", "#ffffaa", "#cf9f9f", "#e6e6e6", "#b5b5b5",
+                  "#939393", "#4c4cff", "#4cff4c", "#4cffff", "#4c4c4c", "#ff4c4c", "#ff4cff", "#ffff4c",
+                  "#ffff4c", "#ff4ccf", "#ff4fff", "#ff7f00", "#ff7fff", "#ffaa00", "#ffffaa", "#cf9f9f",
+                  "#e6e6e6", "#b5b5b5", "#939393", "#7f7f00", "#7f7f7f", "#7f7fff", "#7fff00", "#7fff7f"
+                  ]
+        color_combination = [choice(colors) for i in range(n)]
+        return {"result": color_combination}
+    except Exception as e:
+        return {"result": "Error@Failed to process."}
 
 
 class PopularResult(BaseModel):
@@ -201,16 +215,19 @@ async def youtube_popular_videos(region: str = Query("US", max_length=2)):
 
     Returns the retrieved item.
     """
-    api_key = GCP_YT_APIKEY
-    response = requests.get("https://www.googleapis.com/youtube/v3/videos",
-                            params={"part": "snippet", "chart": "mostPopular", "regionCode": region,
-                                    "key": api_key})
-    items = response.json()["items"]
-    videos = [{"link": f"https://www.youtube.com/watch?v={item['id']}",
-               "title": item["snippet"]["title"],
-               "description": item["snippet"]["description"],
-               "region": region} for item in items]
-    return videos
+    try:
+        api_key = GCP_YT_APIKEY
+        response = requests.get("https://www.googleapis.com/youtube/v3/videos",
+                                params={"part": "snippet", "chart": "mostPopular", "regionCode": region,
+                                        "key": api_key})
+        items = response.json()["items"]
+        videos = [{"link": f"https://www.youtube.com/watch?v={item['id']}",
+                   "title": item["snippet"]["title"],
+                   "description": item["snippet"]["description"],
+                   "region": region} for item in items]
+        return videos
+    except Exception as e:
+        return {"result": "Error@Failed to process."}
 
 # Define a Pydantic model for the YouTube video data
 
@@ -226,80 +243,83 @@ class VideoData(BaseModel):
 
 
 def get_video_data(topic: str, region: str) -> Optional[VideoData]:
-    # Construct the URL for the video search endpoint
-    search_url = 'https://www.googleapis.com/youtube/v3/search'
-    search_params = {
-        'q': topic,
-        'type': 'video',
-        'regionCode': region,
-        'part': 'id',
-        'maxResults': 10,
-        'order': "viewCount",
-        'key': GCP_YT_APIKEY
-    }
-
-    videos = []
-
-    # Call the video search endpoint to get the next page of results
-    search_response = requests.get(search_url, params=search_params)
-    search_response.raise_for_status()
-    search_data = search_response.json()
-
-    # Extract the video IDs from the search results
-    video_ids = [item['id']['videoId'] for item in search_data['items']]
-
-    # Construct the URL for the video details endpoint
-    details_url = 'https://www.googleapis.com/youtube/v3/videos'
-    details_params = {
-        'id': ','.join(video_ids),
-        'part': 'snippet,statistics',
-        'key': GCP_YT_APIKEY
-    }
-
-    # Call the video details endpoint to get the video data
-    details_response = requests.get(details_url, params=details_params)
-    details_response.raise_for_status()
-    details_data = details_response.json()
-
-    # Extract the relevant data from the video details response
-    for item in details_data['items']:
-        snippet = item['snippet']
-        statistics = item['statistics']
-        title = snippet['title']
-        view_count = int(statistics['viewCount'])
-        channel_title = snippet['channelTitle']
-        link = f"https://www.youtube.com/watch?v={item['id']}"
-
-        # Get the channel ID for this video
-        channel_id = snippet['channelId']
-
-        # Construct the URL for the channel details endpoint
-        channels_url = 'https://www.googleapis.com/youtube/v3/channels'
-        channels_params = {
-            'id': channel_id,
-            'part': 'statistics',
+    try:
+        # Construct the URL for the video search endpoint
+        search_url = 'https://www.googleapis.com/youtube/v3/search'
+        search_params = {
+            'q': topic,
+            'type': 'video',
+            'regionCode': region,
+            'part': 'id',
+            'maxResults': 10,
+            'order': "viewCount",
             'key': GCP_YT_APIKEY
         }
 
-        # Call the channel details endpoint to get the subscriber count
-        channels_response = requests.get(
-            channels_url, params=channels_params)
-        channels_response.raise_for_status()
-        channels_data = channels_response.json()
+        videos = []
 
-        # Extract the subscriber count from the channel details response
-        subscribers = int(
-            channels_data['items'][0]['statistics'].get('subscriberCount', 0))
+        # Call the video search endpoint to get the next page of results
+        search_response = requests.get(search_url, params=search_params)
+        search_response.raise_for_status()
+        search_data = search_response.json()
 
-        videos.append(VideoData(
-            title=title,
-            link=link,
-            view_count=view_count,
-            channel_title=channel_title,
-            subscribers=subscribers
-        ))
+        # Extract the video IDs from the search results
+        video_ids = [item['id']['videoId'] for item in search_data['items']]
 
-    return videos
+        # Construct the URL for the video details endpoint
+        details_url = 'https://www.googleapis.com/youtube/v3/videos'
+        details_params = {
+            'id': ','.join(video_ids),
+            'part': 'snippet,statistics',
+            'key': GCP_YT_APIKEY
+        }
+
+        # Call the video details endpoint to get the video data
+        details_response = requests.get(details_url, params=details_params)
+        details_response.raise_for_status()
+        details_data = details_response.json()
+
+        # Extract the relevant data from the video details response
+        for item in details_data['items']:
+            snippet = item['snippet']
+            statistics = item['statistics']
+            title = snippet['title']
+            view_count = int(statistics['viewCount'])
+            channel_title = snippet['channelTitle']
+            link = f"https://www.youtube.com/watch?v={item['id']}"
+
+            # Get the channel ID for this video
+            channel_id = snippet['channelId']
+
+            # Construct the URL for the channel details endpoint
+            channels_url = 'https://www.googleapis.com/youtube/v3/channels'
+            channels_params = {
+                'id': channel_id,
+                'part': 'statistics',
+                'key': GCP_YT_APIKEY
+            }
+
+            # Call the channel details endpoint to get the subscriber count
+            channels_response = requests.get(
+                channels_url, params=channels_params)
+            channels_response.raise_for_status()
+            channels_data = channels_response.json()
+
+            # Extract the subscriber count from the channel details response
+            subscribers = int(
+                channels_data['items'][0]['statistics'].get('subscriberCount', 0))
+
+            videos.append(VideoData(
+                title=title,
+                link=link,
+                view_count=view_count,
+                channel_title=channel_title,
+                subscribers=subscribers
+            ))
+
+        return videos
+    except Exception as e:
+        return {"result": "Error@Failed to process."}
 
 # Define the API endpoint
 
@@ -321,84 +341,167 @@ class ExtractData(BaseModel):
 
 @app.post("/api/color_palette", response_model=ExtractData)
 async def color_palette(n: int = 10, file: UploadFile = File(...)):
-    # Convert the file to a NumPy array
-    contents = await file.read()
-    img = Image.open(io.BytesIO(contents))
+    """
+    Get the colors from the image upload with multipart `file`.
 
-    # Extract colors using colorgram library
-    colors = colorgram.extract(img, n)
+    - `file`: image file multi part
 
-    # Get hex values of the colors
-    color_palette = [
-        f"#{c.rgb.r:02x}{c.rgb.g:02x}{c.rgb.b:02x}" for c in colors]
+    Returns the retrieved item.
+    """
+    try:
+        # Convert the file to a NumPy array
+        contents = await file.read()
+        img = Image.open(io.BytesIO(contents))
 
-    return {"color_palette": color_palette, "num_colors": n}
+        # Extract colors using colorgram library
+        colors = colorgram.extract(img, n)
+
+        # Get hex values of the colors
+        color_palette = [
+            f"#{c.rgb.r:02x}{c.rgb.g:02x}{c.rgb.b:02x}" for c in colors]
+
+        return {"color_palette": color_palette, "num_colors": n}
+    except Exception as e:
+        return {"result": "Error@Failed to process."}
 
 
 def get_search(query, start):
-    list_ids = []
-    query = urllib.parse.quote(query)
-    url = f"https://openapi.naver.com/v1/search/blog?query={query}&sort=date&display=100&start={start}"
-    request = urllib.request.Request(url)
-    request.add_header("X-Naver-Client-Id", NAVER_API_ID)
-    request.add_header("X-Naver-Client-Secret", NAVER_API_PW)
-    response = urllib.request.urlopen(request)
-    rescode = response.getcode()
-    if (rescode == 200):
-        response_body = response.read()
-        body = response_body.decode('utf-8')
-        data = json.loads(body)
-        for item in data["items"]:
-            id = item["bloggerlink"].split("blog.naver.com/")
-            if (len(id) > 1):
-                list_ids.append(f"https://m.blog.naver.com/PostList.nhn?blogId={id[1]}")
-    else:
-        print("Error Code:" + rescode)
+    try:
+        list_ids = []
+        query = urllib.parse.quote(query)
+        url = f"https://openapi.naver.com/v1/search/blog?query={query}&sort=date&display=100&start={start}"
+        request = urllib.request.Request(url)
+        request.add_header("X-Naver-Client-Id", NAVER_API_ID)
+        request.add_header("X-Naver-Client-Secret", NAVER_API_PW)
+        response = urllib.request.urlopen(request)
+        rescode = response.getcode()
+        if (rescode == 200):
+            response_body = response.read()
+            body = response_body.decode('utf-8')
+            data = json.loads(body)
+            for item in data["items"]:
+                id = item["bloggerlink"].split("blog.naver.com/")
+                if (len(id) > 1):
+                    list_ids.append(
+                        f"https://m.blog.naver.com/PostList.nhn?blogId={id[1]}")
+        else:
+            print("Error Code:" + rescode)
 
-    return list_ids
+        return list_ids
+    except Exception as e:
+        return {"result": "Error@Failed to process."}
 
 
 @app.get("/api/blogs", response_model=list[str])
 async def blog_data(query: str = Query(..., required=True)):
-    data1 = get_search(query, 1)
-    data2 = get_search(query, 101)
-    data1.extend(data2)
-    blogs = list(dict.fromkeys(data1))
-    return blogs
+    """
+    Get the latest blog url with query param `query`.
+
+    - `query`: An optional query parameter to search for specific region trend.
+
+    Returns the retrieved item.
+    """
+    try:
+        data1 = get_search(query, 1)
+        data2 = get_search(query, 101)
+        data1.extend(data2)
+        blogs = list(dict.fromkeys(data1))
+        return blogs
+    except Exception as e:
+        return {"result": "Error@Failed to process."}
+
 
 class SubscriberData(BaseModel):
     subscriber_count: int
 
-@app.get("/api/channel/{channel_id}",response_model=SubscriberData)
-async def subscribers(channel_id: str):
-    url = f"https://www.googleapis.com/youtube/v3/channels?part=statistics&id={channel_id}&key={GCP_YT_APIKEY}"
-    
-    response = requests.get(url)
-    data = response.json()
-    
-    if "items" in data:
-        subscriber_count = data["items"][0]["statistics"]["subscriberCount"]
-    else:
-        subscriber_count = 0
-    
-    return {"subscriber_count": subscriber_count}
 
+@app.get("/api/channel/{channel_id}", response_model=SubscriberData)
+async def subscribers(channel_id: str):
+    """
+    Get the live subscriber count with path `channel_id`.
+
+    - `channel_id`: An required path parameter for youtube channel
+
+    Returns the retrieved item.
+    """
+    try:
+        url = f"https://www.googleapis.com/youtube/v3/channels?part=statistics&id={channel_id}&key={GCP_YT_APIKEY}"
+
+        response = requests.get(url)
+        data = response.json()
+
+        if "items" in data:
+            subscriber_count = data["items"][0]["statistics"]["subscriberCount"]
+        else:
+            subscriber_count = 0
+
+        return {"subscriber_count": subscriber_count}
+    except Exception as e:
+        return {"result": "Error@Failed to process."}
 
 
 @app.get("/api/proxy/{url:path}")
 async def reverse_proxy_get(url: str):
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url)
-        headers = response.headers
-        content = response.content
-        status_code = response.status_code
-    return content, headers, status_code
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url)
+            headers = response.headers
+            content = response.content
+            status_code = response.status_code
+        return content, headers, status_code
+    except Exception as e:
+        return {"result": "Error@Failed to process."}
+
 
 @app.post("/api/proxy/{url:path}")
 async def reverse_proxy_post(url: str, request: Request):
-    async with httpx.AsyncClient() as client:
-        response = await client.post(url, data=await request.body())
-        headers = response.headers
-        content = response.content
-        status_code = response.status_code
-    return content, headers, status_code
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, data=await request.body())
+            headers = response.headers
+            content = response.content
+            status_code = response.status_code
+        return content, headers, status_code
+    except Exception as e:
+        return {"result": "Error@Failed to process."}
+
+class SuperResolutionData(BaseModel):
+    image: str
+
+@app.post("/api/super_resolution",response_model=SuperResolutionData)
+async def super_resolution(file: UploadFile = File(...)):
+    """
+    Get the 2x upscaled image with multipart `file`.
+
+    - `file`: file multipart for image
+
+    Returns the retrieved item.
+    """
+    try:
+        # Read image from the uploaded file
+        img_bytes = await file.read()
+        img = Image.open(BytesIO(img_bytes))
+
+        # Convert PIL Image to OpenCV format
+        img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+
+        # Apply super-resolution using OpenCV's DNN module
+        # Note: this model uses the EDSR architecture and was trained on DIV2K dataset
+        model_path = "ESPCN_x2.pb"
+        sr = dnn_superres.DnnSuperResImpl_create()
+        sr.readModel(model_path)
+        sr.setModel("espcn", 2)
+        sr = sr.upsample(img)
+
+        # # Convert the super-resolved image back to PIL Image format
+        sr = cv2.cvtColor(sr, cv2.COLOR_BGR2RGB)
+        pil_img = Image.fromarray(sr)
+
+        # # Convert PIL Image to base64 string
+        buffered = BytesIO()
+        pil_img.save(buffered, format="JPEG")
+        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+
+        return {"image": img_str}
+    except Exception as e:
+        return {"result": "Error@Failed to process the image."}
