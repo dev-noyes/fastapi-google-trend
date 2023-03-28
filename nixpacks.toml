@@ -1,4 +1,4 @@
 providers = ["python"]
 
 [phases.setup]
-aptPkgs = ["wget","libgl1-mesa-glx","libglib2.0-0"]
+aptPkgs = ["ffmpeg", "libsm6", "libxext6"]
