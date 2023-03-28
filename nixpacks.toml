@@ -1,4 +1,2 @@
-providers = ["python"]
-
 [phases.setup]
 nixLibs = ["libGL"]
