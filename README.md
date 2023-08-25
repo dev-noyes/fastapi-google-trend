@@ -23,6 +23,9 @@ tags:
 
 REST API 문서를 원하시는 분은 [문서](https://fastapi-google-trend.up.railway.app/redoc) 을 입력하시면 됩니다.
 
+## Web Scaraping server
+
+data from saramin / inflearn
 
 ## Google Trend REST API template
 
