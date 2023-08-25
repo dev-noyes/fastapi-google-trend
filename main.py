@@ -412,18 +412,13 @@ async def subscribers(channel_id: str):
 
 
 @app.get("/search/inflearn")
-async def search(q: str | None = None):
+async def search_inflearn(q: str | None = None):
     """_summary_
-    get the data from inflearn
+    get the data from inflearn with query parameter `q`
 
-    Args:
-        q (str | None, optional): _description_. Defaults to None.
+    - `q`: An optional query parameter to search for inflearn course
 
-    Raises:
-        HTTPException: _description_
-
-    Returns:
-        array: data array
+    Returns data array
     """
     if q is None:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -463,20 +458,13 @@ async def search(q: str | None = None):
 
 
 @app.get("/search/saramin")
-async def search(q: str | None = None, page: int = 1, limit: int = 40):
+async def search_saramin(q: str | None = None, page: int = 1, limit: int = 40):
     """_summary_
-    get the data from saramin
+    get the data from saramin with query parameter `q`
 
-    Args:
-        q (str | None, optional): _description_. Defaults to None.
-        page (int, optional): _description_. Defaults to 1.
-        limit (int, optional): _description_. Defaults to 40.
+    - `q`: An optional query parameter to search for inflearn course
 
-    Raises:
-        HTTPException: _description_
-
-    Returns:
-        _type_: _description_
+    Returns data array
     """
     if q is None:
         raise HTTPException(status_code=404, detail="Item not found")
