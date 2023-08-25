@@ -492,11 +492,18 @@ async def search(q: str | None = None, page: int = 1, limit: int = 40):
         title = ar.select_one("a")['title']
         title = title.replace(",", "")
         obj["title"] = title
+
         link = ar.select_one("a")['href']
         obj["link"] = f"https://www.saramin.co.kr{link}"
+
         company = ar.select_one(
             'div.area_corp > strong > a').text.strip()
         obj["company"] = company
+
+        companylink = ar.select_one(
+            'div.area_corp > strong > a')['href']
+        obj["companylink"] = f"https://www.saramin.co.kr{companylink}"
+
         enddate = ar.select_one('div.job_date > span').text.strip()
         obj["enddate"] = enddate
 
