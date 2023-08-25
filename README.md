@@ -25,7 +25,7 @@ REST API 문서를 원하시는 분은 [문서](https://fastapi-google-trend.up.
 
 ## Web Scaraping server
 
-data from saramin / inflearn
+data from saramin / inflearn data
 
 ## Google Trend REST API template
 
