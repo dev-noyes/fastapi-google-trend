@@ -462,7 +462,7 @@ async def search_saramin(q: str | None = None, page: int = 1, limit: int = 40):
     """_summary_
     get the data from saramin with query parameter `q`
 
-    - `q`: An optional query parameter to search for inflearn course
+    - `q`: An optional query parameter to search for saramin
 
     Returns data array
     """
@@ -533,3 +533,93 @@ async def search_saramin(q: str | None = None, page: int = 1, limit: int = 40):
         obj["apply"] = apply
         arr.append(obj)
     return arr
+
+
+class Review(BaseModel):
+    url: str
+    page: int = 1
+
+
+@app.post("/search/naver-review")
+async def search_naver_review(item: Review):
+    """_summary_
+    post the review from smartstore with query parameter `q`
+
+    - `q`: An optional query parameter to search for query course
+    - `page`: An optional query parameter for pagination
+
+    Returns data array
+    """
+    q = item.url
+    page = item.page
+
+    if q is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    headers = {
+        'authority': 'm.smartstore.naver.com',
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'accept-language': 'en-US,en;q=0.8',
+        'cache-control': 'max-age=0',
+        'referer': 'https://search.shopping.naver.com/',
+        'sec-ch-ua': '"Brave";v="117", "Not;A=Brand";v="8", "Chromium";v="117"',
+        'sec-ch-ua-mobile': '?1',
+        'sec-ch-ua-platform': '"Android"',
+        'sec-fetch-dest': 'document',
+        'sec-fetch-mode': 'navigate',
+        'sec-fetch-site': 'same-site',
+        'sec-fetch-user': '?1',
+        'sec-gpc': '1',
+        'upgrade-insecure-requests': '1',
+        'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Mobile Safari/537.36',
+    }
+    res = requests.get(q, headers=headers)
+
+    if (res.status_code != 200):
+        return "error"
+    soup = BeautifulSoup(res.text, 'html.parser')
+    cnt = 0
+    result = "error"
+    for link in soup.find_all('script'):
+        cnt = cnt+1
+        if (cnt == 2):
+            data = link.text.replace("window.__PRELOADED_STATE__=", "")
+            data = json.loads(data)
+            # print(data["smartStoreV2"]["channel"]["payReferenceKey"])
+            result = f'{data["smartStoreV2"]["channel"]["payReferenceKey"]},{data["product"]["A"]["productNo"]}'
+    if result == "error":
+        raise HTTPException(status_code=404, detail="Item not found")
+    merchantNo = result.split(',')[0]
+    originProductNo = result.split(',')[1]
+    headers = {
+        'authority': 'm.smartstore.naver.com',
+        'accept': 'application/json, text/plain, */*',
+        'accept-language': 'en-US,en;q=0.8',
+        'content-type': 'application/json;charset=UTF-8',
+        'origin': 'https://m.smartstore.naver.com',
+        'referer': 'https://m.smartstore.naver.com/cooshoong/products/8788692280?NaPm=ct%3Dlmqg8hog%7Cci%3De864230aec734cfbae01ed8388127a7e67c4dc2a%7Ctr%3Dslsl%7Csn%3D1052867%7Chk%3Dc966a4254ce175e8403d5b66c517c5f335edc67c',
+        'sec-ch-ua': '"Brave";v="117", "Not;A=Brand";v="8", "Chromium";v="117"',
+        'sec-ch-ua-mobile': '?1',
+        'sec-ch-ua-platform': '"Android"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-origin',
+        'sec-gpc': '1',
+        'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Mobile Safari/537.36',
+    }
+    # REVIEW_SCORE_ASC REVIEW_RANKING REVIEW_SCORE_DESC REVIEW_CREATE_DATE_DESC
+    json_data = {
+        'page': page,
+        'pageSize': 20,
+        'merchantNo': merchantNo,
+        'originProductNo': originProductNo,
+        'sortType': 'REVIEW_RANKING',
+    }
+    res = requests.post(
+        'https://m.smartstore.naver.com/i/v1/reviews/paged-reviews',
+        headers=headers,
+        json=json_data,
+    )
+    if (res.status_code != 200):
+        raise HTTPException(status_code=404, detail="Item not found")
+    return res.json()
