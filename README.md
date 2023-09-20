@@ -27,7 +27,7 @@ REST API 문서를 원하시는 분은 [문서](https://fastapi-google-trend.up.
 
 - saramin data
 - inflearn data
-- naver shopping data
+- naver shopping data 
 
 ## Google Trend REST API template
 
